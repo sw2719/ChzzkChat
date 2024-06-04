@@ -10,9 +10,8 @@ from cmd_type import CHZZK_CHAT_CMD
 
 
 class ChzzkChat:
-    def __init__(self, streamer: str, file_path: str, start_time: float, cookies, logger):
+    def __init__(self, streamer: str, start_time: float, cookies, logger):
         self.streamer = streamer
-        self.file_path = file_path
         self.start_time = datetime.datetime.fromtimestamp(start_time)
         self.cookies = cookies
         self.logger = logger
@@ -31,7 +30,7 @@ class ChzzkChat:
 
         sock = WebSocket()
         sock.connect('wss://kr-ss1.chat.naver.com/chat')
-        print(f'{self.channelName} 채팅창에 연결 중 .', end="")
+        print(f'{self.channelName} 채팅창에 연결 중.', end="")
 
         default_dict = {
             "ver": "2",
@@ -53,7 +52,7 @@ class ChzzkChat:
         sock.send(json.dumps(dict(send_dict, **default_dict)))
         sock_response = json.loads(sock.recv())
         self.sid = sock_response['bdy']['sid']
-        print(f'\r{self.channelName} 채팅창에 연결 중 ..', end="")
+        print(f'\r{self.channelName} 채팅창에 연결 중..', end="")
 
         send_dict = {
             "cmd": CHZZK_CHAT_CMD['request_recent_chat'],
@@ -67,7 +66,7 @@ class ChzzkChat:
 
         sock.send(json.dumps(dict(send_dict, **default_dict)))
         sock.recv()
-        print(f'\r{self.channelName} 채팅창에 연결 중 ...')
+        print(f'\r{self.channelName} 채팅창에 연결 중...')
 
         self.sock = sock
 
@@ -141,7 +140,7 @@ class ChzzkChat:
                 pass
 
 
-def get_logger(file_path):
+def get_logger(file_path, stream=False):
     formatter = logging.Formatter('%(message)s')
 
     logger = logging.getLogger()
@@ -151,27 +150,33 @@ def get_logger(file_path):
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 
-    stream_handler = logging.StreamHandler()
-    stream_handler.setFormatter(formatter)
-    logger.addHandler(stream_handler)
+    if stream:
+        stream_handler = logging.StreamHandler()
+        stream_handler.setFormatter(formatter)
+        logger.addHandler(stream_handler)
 
     return logger
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument('--nid_ses', type=str, required=True)
+    parser.add_argument('--nid_aut', type=str, required=True)
     parser.add_argument('--streamer_id', type=str, required=True)
     parser.add_argument('--file_path', type=str, default='./chat.txt')
     parser.add_argument('--start_time', type=float, default=0)
+    parser.add_argument('--print_output', action='store_true', default=False)
     args = parser.parse_args()
 
-    with open('cookies.json') as f:
-        cookies = json.load(f)
+    cookies = {
+        'NID_SES': args.nid_ses,
+        'NID_AUT': args.nid_aut
+    }
 
     if not args.start_time:
         args.start_time = datetime.datetime.now().timestamp()
 
-    logger = get_logger(args.file_path)
-    chzzkchat = ChzzkChat(args.streamer_id, args.file_path, args.start_time, cookies, logger)
+    logger = get_logger(args.file_path, args.print_output)
+    chzzkchat = ChzzkChat(args.streamer_id, args.start_time, cookies, logger)
 
     chzzkchat.run()
