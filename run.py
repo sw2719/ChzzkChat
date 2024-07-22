@@ -147,7 +147,7 @@ def get_logger(file_path, stream=False):
     logger.setLevel(logging.INFO)
 
     print('채팅 파일 경로:', file_path)
-    file_handler = logging.FileHandler(file_path, mode="w")
+    file_handler = logging.FileHandler(file_path)
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 
